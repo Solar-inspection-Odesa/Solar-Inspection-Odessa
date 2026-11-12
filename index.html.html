@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="uk" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOLAR THERMAL AUDIT — Тепловізійна діагностика СЕС | Одеса та область</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            graphite: {
+              950: '#070b14',
+              900: '#0d1424',
+              850: '#121c30',
+              800: '#18243d',
+            },
+            thermal: {
+              amber: '#ff6b00',
+              hot: '#ff2a5f',
+              cyan: '#00d2ff',
+              emerald: '#10b981',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #070b14;
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+    .thermal-gradient-text {
+      background: linear-gradient(90deg, #38bdf8 0%, #fbbf24 52%, #ff4d4d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .thermal-border {
+      position: relative;
+    }
+    .thermal-border::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.45), rgba(255, 107, 0, 0.45));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .grid-bg {
+      background-size: 36px 36px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+    @keyframes pulseHotspot {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+    .hotspot-pulse {
+      animation: pulseHotspot 2.2s infinite ease-in-out;
+      transform-origin: center;
+    }
+    /* Custom range slider for comparison */
+    input[type="range"].compare-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: ew-resize;
+    }
+    input[type="range"].compare-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+      background: #ff6b00;
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 20px rgba(255, 107, 0, 0.8);
+      cursor: ew-resize;
+    }
+    input[type="range"].compare-slider::-moz-range-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+      background: #ff6b00;
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 20px rgba(255, 107, 0, 0.8);
+      cursor: ew-resize;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-orange-500 selection:text-white">
+
+  <!-- =========================================================
+       1. HEADER / НАВІГАЦІЯ
+  ========================================================= -->
+  <header class="sticky top-0 z-50 bg-graphite-950/85 backdrop-blur-xl border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20">
+        <!-- Logo -->
+        <a href="#" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 via-amber-500 to-rose-600 p-[2px] shadow-lg shadow-orange-500/20">
+            <div class="w-full h-full bg-graphite-950 rounded-[10px] flex items-center justify-center">
+              <svg class="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <div class="font-extrabold tracking-tight text-white text-base sm:text-lg leading-none">
+              SOLAR <span class="text-amber-400">THERMAL</span> AUDIT
+            </div>
+            <div class="text-[11px] font-mono text-slate-400 tracking-wider uppercase mt-1 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Одеса та область • FLIR / DJI
+            </div>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-300">
+          <a href="#diagnostics" class="hover:text-amber-400 transition-colors">Що перевіряємо</a>
+          <a href="#pricing" class="hover:text-amber-400 transition-colors">Послуги та ціни</a>
+          <a href="#calculator" class="hover:text-amber-400 transition-colors">Калькулятор</a>
+          <a href="#examples" class="hover:text-amber-400 transition-colors">Приклади робіт</a>
+          <a href="#faq" class="hover:text-amber-400 transition-colors">FAQ</a>
+        </nav>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <a href="#contacts-config" title="Налаштувати контакти" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700/70 transition">
+            <svg class="w-4 h-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            <span id="headerPhoneDisplay">+38 (0XX) XXX-XX-XX</span>
+          </a>
+          <a href="#order" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-orange-600/25 transition active:scale-95">
+            Замовити огляд
+          </a>
+          <!-- Mobile Menu Button -->
+          <button id="mobileMenuBtn" type="button" aria-label="Меню" class="lg:hidden p-2.5 rounded-xl bg-slate-800/90 text-slate-200 border border-slate-700">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Menu -->
+    <div id="mobileMenu" class="hidden lg:hidden bg-graphite-900 border-b border-slate-800 px-4 pt-2 pb-5 space-y-2">
+      <a href="#diagnostics" class="block py-2.5 px-3 rounded-xl text-slate-200 hover:bg-slate-800 font-medium">Що перевіряємо</a>
+      <a href="#pricing" class="block py-2.5 px-3 rounded-xl text-slate-200 hover:bg-slate-800 font-medium">Послуги та ціни</a>
+      <a href="#calculator" class="block py-2.5 px-3 rounded-xl text-slate-200 hover:bg-slate-800 font-medium">Калькулятор вартості</a>
+      <a href="#examples" class="block py-2.5 px-3 rounded-xl text-slate-200 hover:bg-slate-800 font-medium">Приклади діагностики</a>
+      <a href="#faq" class="block py-2.5 px-3 rounded-xl text-slate-200 hover:bg-slate-800 font-medium">Часті запитання (FAQ)</a>
+      <a href="#contacts-config" class="block py-2.5 px-3 rounded-xl text-amber-400 hover:bg-slate-800 font-medium">Контакти спеціаліста</a>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. HERO SECTION + INTERACTIVE RGB vs FLIR SLIDER
+  ========================================================= -->
+  <section class="relative pt-10 pb-16 sm:pt-16 sm:pb-24 grid-bg overflow-hidden">
+    <!-- Decorative thermal glow -->
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-sky-500/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute top-32 -right-24 w-96 h-96 bg-orange-600/15 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+        
+        <!-- Left Content -->
+        <div class="lg:col-span-6 space-y-6">
+          <div class="inline-flex flex-wrap items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs font-medium text-sky-300">
+            <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-bold">ОДЕСА ТА ОБЛАСТЬ</span>
+            <span>Аеромоніторинг приватних і комерційних СЕС</span>
+          </div>
+
+          <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.15]">
+            Знайдіть схований перегрів, щоб <span class="thermal-gradient-text">зберегти генерацію СЕС</span>
+          </h1>
+
+          <p class="text-base sm:text-lg text-slate-300 leading-relaxed">
+            Надаємо послуги з тепловізійної діагностики та моніторингу сонячних електростанцій. Аерозйомка промисловим дроном з тепловізором дозволяє швидко та безпомилково виявити приховані дефекти, які неможливо помітити під час звичайного візуального огляду.
+          </p>
+
+          <!-- Key Badges -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+            <div class="p-3 rounded-2xl bg-graphite-900/90 border border-slate-800 flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <span class="text-xs sm:text-sm font-semibold text-slate-200">Якість генерації</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-graphite-900/90 border border-slate-800 flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <span class="text-xs sm:text-sm font-semibold text-slate-200">Безпека станції</span>
+            </div>
+            <div class="col-span-2 sm:col-span-1 p-3 rounded-2xl bg-graphite-900/90 border border-slate-800 flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span class="text-xs sm:text-sm font-semibold text-slate-200">Економія грошей</span>
+            </div>
+          </div>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3.5 pt-2">
+            <a href="#calculator" class="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-base shadow-xl shadow-orange-600/25 transition active:scale-[0.98]">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Розрахувати вартість
+            </a>
+            <a href="#pricing" class="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-800/90 hover:bg-slate-800 text-white font-semibold text-base border border-slate-700 transition">
+              Переглянути тарифи
+              <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Right Visual: Interactive Before/After Thermal Comparison -->
+        <div class="lg:col-span-6">
+          <div class="rounded-3xl bg-graphite-900 border border-slate-800 p-3 sm:p-4 shadow-2xl thermal-border">
+            <div class="flex items-center justify-between px-2 pb-3 text-xs font-mono">
+              <span class="flex items-center gap-1.5 text-sky-400 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-sky-400"></span> ВІЗУАЛЬНИЙ ОГЛЯД (RGB)
+              </span>
+              <span class="text-slate-400 hidden sm:inline">Потягніть повзунок ↔</span>
+              <span class="flex items-center gap-1.5 text-amber-400 font-semibold">
+                ТЕПЛОВІЗОР FLIR / DJI <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+              </span>
+            </div>
+
+            <!-- Interactive Comparison Container -->
+            <div id="heroCompareBox" class="relative w-full aspect-[16/11] rounded-2xl overflow-hidden select-none border border-slate-700/80 bg-slate-950">
+              
+              <!-- LAYER 1 (BOTTOM / RIGHT): THERMAL SPECTRUM VIEW -->
+              <div class="absolute inset-0 w-full h-full">
+                <svg viewBox="0 0 800 550" class="w-full h-full object-cover" preserveAspectRatio="xMidYMid slice">
+                  <defs>
+                    <linearGradient id="thermalBg" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#140933" />
+                      <stop offset="50%" stop-color="#280b54" />
+                      <stop offset="100%" stop-color="#110729" />
+                    </linearGradient>
+                    <linearGradient id="panelCool" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#3b1678" />
+                      <stop offset="100%" stop-color="#581c87" />
+                    </linearGradient>
+                    <radialGradient id="hotspot85" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#ffffff" />
+                      <stop offset="22%" stop-color="#fef08a" />
+                      <stop offset="50%" stop-color="#f97316" />
+                      <stop offset="80%" stop-color="#dc2626" stop-opacity="0.7" />
+                      <stop offset="100%" stop-color="#581c87" stop-opacity="0" />
+                    </radialGradient>
+                    <radialGradient id="hotspot62" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#fde047" />
+                      <stop offset="45%" stop-color="#ea580c" />
+                      <stop offset="85%" stop-color="#9333ea" stop-opacity="0.4" />
+                      <stop offset="100%" stop-color="#581c87" stop-opacity="0" />
+                    </radialGradient>
+                    <linearGradient id="diodeFault" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stop-color="#f59e0b" />
+                      <stop offset="100%" stop-color="#ef4444" />
+                    </linearGradient>
+                  </defs>
+
+                  <!-- Roof / Ground Thermal Background -->
+                  <rect width="800" height="550" fill="url(#thermalBg)" />
+                  <!-- Roof tiles thermal lines -->
+                  <g stroke="#311063" stroke-width="2" opacity="0.6">
+                    <line x1="0" y1="60" x2="800" y2="60" />
+                    <line x1="0" y1="120" x2="800" y2="120" />
+                    <line x1="0" y1="450" x2="800" y2="450" />
+                    <line x1="0" y1="500" x2="800" y2="500" />
+                  </g>
+
+                  <!-- Solar Array Perspective Group -->
+                  <g transform="translate(70, 95)">
+                    <!-- Row 1: 5 Panels -->
+                    <g id="thermalPanelsRow1">
+                      <rect x="0" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#9333ea" stroke-width="2" />
+                      <rect x="132" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#9333ea" stroke-width="2" />
+                      <!-- Panel 3 has a bypass diode substring overheating -->
+                      <rect x="264" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#f97316" stroke-width="2" />
+                      <rect x="266" y="2" width="40" height="161" fill="url(#diodeFault)" opacity="0.75" />
+                      <rect x="396" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#9333ea" stroke-width="2" />
+                      <rect x="528" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#9333ea" stroke-width="2" />
+                    </g>
+
+                    <!-- Row 2: 5 Panels -->
+                    <g transform="translate(0, 178)">
+                      <rect x="0" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#9333ea" stroke-width="2" />
+                      <rect x="132" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#9333ea" stroke-width="2" />
+                      <rect x="264" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#9333ea" stroke-width="2" />
+                      <rect x="396" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#9333ea" stroke-width="2" />
+                      <rect x="528" y="0" width="124" height="165" rx="4" fill="url(#panelCool)" stroke="#9333ea" stroke-width="2" />
+                    </g>
+
+                    <!-- Cell Grid Lines -->
+                    <g stroke="#7e22ce" stroke-width="1" opacity="0.55">
+                      <line x1="0" y1="55" x2="652" y2="55" />
+                      <line x1="0" y1="110" x2="652" y2="110" />
+                      <line x1="0" y1="233" x2="652" y2="233" />
+                      <line x1="0" y1="288" x2="652" y2="288" />
+                    </g>
+
+                    <!-- HOT SPOTS (Thermal Anomalies) -->
+                    <!-- Critical Hot Spot 1: 87.7°C -->
+                    <circle cx="458" cy="95" r="46" fill="url(#hotspot85)" class="hotspot-pulse" />
+                    <!-- Critical Hot Spot 2: 85.3°C -->
+                    <circle cx="195" cy="245" r="44" fill="url(#hotspot85)" class="hotspot-pulse" />
+                    <!-- Medium Hot Spot 3: 64.7°C -->
+                    <circle cx="575" cy="285" r="36" fill="url(#hotspot62)" />
+                    <!-- Medium Hot Spot 4: 61.2°C -->
+                    <circle cx="72" cy="118" r="32" fill="url(#hotspot62)" />
+
+                    <!-- Radiometric Callout Badges -->
+                    <!-- Callout 1 -->
+                    <g transform="translate(412, 18)">
+                      <rect x="0" y="0" width="112" height="36" rx="6" fill="#090d16" fill-opacity="0.9" stroke="#ff4d4d" stroke-width="1.5" />
+                      <text x="10" y="14" fill="#fca5a5" font-family="JetBrains Mono, monospace" font-size="10" font-weight="bold">HOT SPOT SP2</text>
+                      <text x="10" y="29" fill="#ffffff" font-family="JetBrains Mono, monospace" font-size="13" font-weight="bold">87.7°C 🔥</text>
+                    </g>
+
+                    <!-- Callout 2 -->
+                    <g transform="translate(245, -36)">
+                      <rect x="0" y="0" width="136" height="30" rx="6" fill="#090d16" fill-opacity="0.9" stroke="#fbbf24" stroke-width="1.5" />
+                      <text x="10" y="19" fill="#fde047" font-family="JetBrains Mono, monospace" font-size="11" font-weight="bold">ДІОД: ПЕРЕГРІВ 72°C</text>
+                    </g>
+
+                    <!-- Callout 3 -->
+                    <g transform="translate(142, 292)">
+                      <rect x="0" y="0" width="112" height="36" rx="6" fill="#090d16" fill-opacity="0.9" stroke="#ff4d4d" stroke-width="1.5" />
+                      <text x="10" y="14" fill="#fca5a5" font-family="JetBrains Mono, monospace" font-size="10" font-weight="bold">HOT SPOT SP1</text>
+                      <text x="10" y="29" fill="#ffffff" font-family="JetBrains Mono, monospace" font-size="13" font-weight="bold">85.3°C 🔥</text>
+                    </g>
+                  </g>
+
+                  <!-- FLIR Temperature Scale Bar on Right -->
+                  <g transform="translate(752, 85)">
+                    <defs>
+                      <linearGradient id="flirScale" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#ffffff" />
+                        <stop offset="25%" stop-color="#facc15" />
+                        <stop offset="55%" stop-color="#f97316" />
+                        <stop offset="80%" stop-color="#9333ea" />
+                        <stop offset="100%" stop-color="#1e1b4b" />
+                      </linearGradient>
+                    </defs>
+                    <text x="-8" y="-8" fill="#ffffff" font-family="JetBrains Mono, monospace" font-size="11" font-weight="bold">88°C</text>
+                    <rect x="0" y="0" width="14" height="360" rx="4" fill="url(#flirScale)" stroke="#ffffff" stroke-width="1" />
+                    <text x="-8" y="376" fill="#94a3b8" font-family="JetBrains Mono, monospace" font-size="11">32°C</text>
+                  </g>
+                </svg>
+              </div>
+
+              <!-- LAYER 2 (TOP / LEFT CLIPPED): VISUAL RGB VIEW -->
+              <div id="rgbOverlayLayer" class="absolute inset-0 w-full h-full overflow-hidden" style="clip-path: inset(0 50% 0 0);">
+                <svg viewBox="0 0 800 550" class="w-full h-full object-cover" preserveAspectRatio="xMidYMid slice">
+                  <defs>
+                    <linearGradient id="skyRoofBg" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#1e293b" />
+                      <stop offset="100%" stop-color="#334155" />
+                    </linearGradient>
+                    <linearGradient id="solarBlue" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#1d4ed8" />
+                      <stop offset="50%" stop-color="#1e40af" />
+                      <stop offset="100%" stop-color="#172554" />
+                    </linearGradient>
+                  </defs>
+
+                  <!-- Normal Roof Background -->
+                  <rect width="800" height="550" fill="url(#skyRoofBg)" />
+                  <g stroke="#475569" stroke-width="2" opacity="0.45">
+                    <line x1="0" y1="60" x2="800" y2="60" />
+                    <line x1="0" y1="120" x2="800" y2="120" />
+                    <line x1="0" y1="450" x2="800" y2="450" />
+                    <line x1="0" y1="500" x2="800" y2="500" />
+                  </g>
+
+                  <!-- Identical Solar Panels Looking Completely Normal in RGB -->
+                  <g transform="translate(70, 95)">
+                    <!-- Row 1 -->
+                    <rect x="0" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+                    <rect x="132" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+                    <rect x="264" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+                    <rect x="396" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+                    <rect x="528" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+
+                    <!-- Row 2 -->
+                    <g transform="translate(0, 178)">
+                      <rect x="0" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+                      <rect x="132" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+                      <rect x="264" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+                      <rect x="396" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+                      <rect x="528" y="0" width="124" height="165" rx="4" fill="url(#solarBlue)" stroke="#cbd5e1" stroke-width="2.5" />
+                    </g>
+
+                    <!-- Silicon cell grid lines -->
+                    <g stroke="#60a5fa" stroke-width="0.8" opacity="0.45">
+                      <line x1="0" y1="33" x2="652" y2="33" />
+                      <line x1="0" y1="66" x2="652" y2="66" />
+                      <line x1="0" y1="99" x2="652" y2="99" />
+                      <line x1="0" y1="132" x2="652" y2="132" />
+                      <line x1="0" y1="211" x2="652" y2="211" />
+                      <line x1="0" y1="244" x2="652" y2="244" />
+                      <line x1="0" y1="277" x2="652" y2="277" />
+                      <line x1="0" y1="310" x2="652" y2="310" />
+                    </g>
+
+                    <!-- Status label on RGB side -->
+                    <g transform="translate(16, 16)">
+                      <rect x="0" y="0" width="215" height="34" rx="8" fill="#0f172a" fill-opacity="0.85" stroke="#38bdf8" stroke-width="1.2" />
+                      <text x="12" y="21" fill="#e0f2fe" font-family="Inter, sans-serif" font-size="12" font-weight="600">Оком: дефектів не видно ✓</text>
+                    </g>
+                  </g>
+                </svg>
+              </div>
+
+              <!-- Vertical Divider Line -->
+              <div id="compareDividerLine" class="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_15px_rgba(255,255,255,0.9)] pointer-events-none" style="left: 50%;"></div>
+
+              <!-- Interactive Range Input Overlay -->
+              <input
+                id="heroCompareRange"
+                type="range"
+                min="5"
+                max="95"
+                value="50"
+                aria-label="Порівняння звичайного та тепловізійного зображення"
+                class="compare-slider absolute inset-0 w-full h-full z-20 opacity-100"
+              />
+            </div>
+
+            <!-- Caption under interactive widget -->
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 px-2 text-xs text-slate-400">
+              <span>* Наочна модель радіометричної зйомки DJI / FLIR</span>
+              <span class="text-emerald-400 font-medium">Виявлення перегріву до +87.7°C за 1 обліт</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. ЩО МИ ПЕРЕВІРЯЄМО (ДІАГНОСТИЧНІ МОЖЛИВОСТІ)
+  ========================================================= -->
+  <section id="diagnostics" class="py-16 sm:py-24 bg-graphite-900/60 border-y border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center space-y-4 mb-12 sm:mb-16">
+        <span class="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">Діагностичні можливості</span>
+        <h2 class="text-2xl sm:text-4xl font-extrabold text-white">Що саме ми перевіряємо під час аудиту</h2>
+        <p class="text-slate-400 text-sm sm:text-base">
+          Тепловізійний дрон фіксує температурну карту кожної сонячної панелі з точністю до десятих градуса, знаходячи несправності на ранній стадії.
+        </p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Card 1 -->
+        <div class="p-6 rounded-3xl bg-graphite-950 border border-slate-800 hover:border-amber-500/50 transition group">
+          <div class="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Мікротріщини та гарячі точки (Hot Spots)</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Виявлення локального перегріву кремнієвих комірок (+55°C…+85°C+), пошкоджень від граду чи монтажу, які знижують виробіток та можуть призвести до прогорання модуля.
+          </p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="p-6 rounded-3xl bg-graphite-950 border border-slate-800 hover:border-amber-500/50 transition group">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Діоди у розподільчих коробках</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Перевірка справності байпас-діодів (bypass diodes). Виявляємо відключені кластери панелі (втрата 1/3 або 2/3 потужності модуля) та перегрів контактних клем.
+          </p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="p-6 rounded-3xl bg-graphite-950 border border-slate-800 hover:border-amber-500/50 transition group">
+          <div class="w-12 h-12 rounded-2xl bg-sky-500/15 text-sky-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Стан окремих модулів та стрінгів</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Аналіз рівномірності нагріву всіх фотополів, виявлення відключених чи ослаблених стрінгів, PID-деградації, розшарування ламінату та впливу затінень.
+          </p>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="p-6 rounded-3xl bg-graphite-950 border border-slate-800 hover:border-amber-500/50 transition group">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Ортофотоплан та карта локалізації</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Створення високоточного тепловізійного та RGB ортофотоплану станції. Кожен дефект отримує точні координати та номер ряду/панелі для швидкої заміни.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       4. КАТАЛОГ ПОСЛУГ ТА ПРАЙС-ЛИСТ (2 ФОРМАТИ)
+  ========================================================= -->
+  <section id="pricing" class="py-16 sm:py-24 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center space-y-4 mb-12 sm:mb-16">
+        <span class="text-xs font-mono uppercase tracking-widest text-sky-400 font-bold">Каталог послуг та тарифи</span>
+        <h2 class="text-2xl sm:text-4xl font-extrabold text-white">Два зручні формати діагностики СЕС</h2>
+        <p class="text-slate-400 text-sm sm:text-base">
+          Прозора вартість залежно від польотного часу (кількості використаних акумуляторів дрона) та глибини аналітики.
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        
+        <!-- FORMAT 1: Експрес огляд -->
+        <div class="rounded-3xl bg-graphite-900 border border-slate-800 p-6 sm:p-8 flex flex-col justify-between shadow-xl">
+          <div>
+            <div class="flex items-center justify-between gap-4 mb-4">
+              <span class="px-3 py-1 rounded-full bg-sky-500/15 text-sky-400 text-xs font-bold uppercase tracking-wider">
+                Формат 1 • Оперативно
+              </span>
+              <span class="text-xs font-mono text-slate-400">Результат на місці</span>
+            </div>
+
+            <h3 class="text-2xl font-extrabold text-white mb-3">Експрес огляд на місці</h3>
+            <p class="text-sm text-slate-300 leading-relaxed mb-6">
+              Діагностика в режимі реального часу. Озвучення результатів та демонстрація виявлених проблем прямо на екрані пульта/монітора під час роботи. Чудовий варіант для оперативної перевірки ключових зон та швидкого пошуку несправностей.
+            </p>
+
+            <!-- Features -->
+            <ul class="space-y-3 text-sm text-slate-300 mb-8 border-t border-slate-800 pt-6">
+              <li class="flex items-start gap-2.5">
+                <svg class="w-5 h-5 text-sky-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Огляд масивів у режимі реального часу (Live-трансляція)</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <svg class="w-5 h-5 text-sky-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Миттєве виявлення критичних гарячих точок (Hot Spots) та несправних діодів</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <svg class="w-5 h-5 text-sky-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Фіксація проблемних панелей на місці разом із замовником</span>
+              </li>
+            </ul>
+
+            <!-- Price Tiers Table -->
+            <div class="space-y-2.5 mb-8">
+              <div class="text-xs font-mono uppercase text-slate-400 mb-2">Вартість за обсягом польоту:</div>
+              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-graphite-950 border border-slate-800/90">
+                <div>
+                  <span class="font-semibold text-white text-sm">1 батарея</span>
+                  <span class="text-xs text-slate-400 block sm:inline sm:ml-2">(20–45 хв польотного часу)</span>
+                </div>
+                <span class="font-mono font-extrabold text-lg text-sky-400">2 500 грн</span>
+              </div>
+              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-graphite-950 border border-slate-800/90">
+                <div>
+                  <span class="font-semibold text-white text-sm">2 батареї</span>
+                  <span class="text-xs text-slate-400 block sm:inline sm:ml-2">(45–90 хв польотного часу)</span>
+                </div>
+                <span class="font-mono font-extrabold text-lg text-sky-400">4 500 грн</span>
+              </div>
+              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-graphite-950 border border-slate-800/90">
+                <div>
+                  <span class="font-semibold text-white text-sm">3 батареї</span>
+                  <span class="text-xs text-slate-400 block sm:inline sm:ml-2">(90–135 хв польотного часу)</span>
+                </div>
+                <span class="font-mono font-extrabold text-lg text-sky-400">6 000 грн</span>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" onclick="selectPackageAndScroll('express', 1)" class="w-full py-4 px-6 rounded-2xl bg-slate-800 hover:bg-sky-600 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 border border-slate-700 hover:border-sky-500">
+            <span>Обрати Експрес огляд</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- FORMAT 2: Повний огляд з постобробкою та звітом -->
+        <div class="rounded-3xl bg-gradient-to-b from-graphite-850 to-graphite-900 border-2 border-amber-500/70 p-6 sm:p-8 flex flex-col justify-between shadow-2xl shadow-orange-500/10 relative">
+          <div class="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg">
+            Рекомендований вибір
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between gap-4 mb-4">
+              <span class="px-3 py-1 rounded-full bg-amber-500/15 text-amber-400 text-xs font-bold uppercase tracking-wider">
+                Формат 2 • Комплексний аудит
+              </span>
+              <span class="text-xs font-mono text-amber-300">PDF + Ортофотоплан</span>
+            </div>
+
+            <h3 class="text-2xl font-extrabold text-white mb-3">Повний огляд з постобробкою та звітом</h3>
+            <p class="text-sm text-slate-300 leading-relaxed mb-6">
+              Глибокий комплексний аналіз стану всієї станції. Професійна радіометрична постобробка знімків, формування детального PDF-звіту, ортофотоплану, аерофотоплану та точної карти локалізації дефектів.
+            </p>
+
+            <!-- Features -->
+            <ul class="space-y-3 text-sm text-slate-200 mb-8 border-t border-slate-800 pt-6">
+              <li class="flex items-start gap-2.5">
+                <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span><strong>Детальний PDF-звіт</strong> із температурними показниками кожного виявленого дефекту</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span><strong>Тепловізійний та RGB ортофотоплан</strong> і аерофотоплан всієї СЕС</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span><strong>Точна карта локалізації</strong> пошкоджень для сервісної бригади або гарантійної заміни</span>
+              </li>
+            </ul>
+
+            <!-- Price Tiers Table -->
+            <div class="space-y-2.5 mb-8">
+              <div class="text-xs font-mono uppercase text-amber-300/80 mb-2">Вартість за обсягом польоту:</div>
+              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-graphite-950/90 border border-amber-500/30">
+                <div>
+                  <span class="font-semibold text-white text-sm">1 батарея</span>
+                  <span class="text-xs text-slate-400 block sm:inline sm:ml-2">(20–45 хв польотного часу)</span>
+                </div>
+                <span class="font-mono font-extrabold text-lg text-amber-400">4 000 грн</span>
+              </div>
+              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-graphite-950/90 border border-amber-500/30">
+                <div>
+                  <span class="font-semibold text-white text-sm">2 батареї</span>
+                  <span class="text-xs text-slate-400 block sm:inline sm:ml-2">(45–90 хв польотного часу)</span>
+                </div>
+                <span class="font-mono font-extrabold text-lg text-amber-400">7 000 грн</span>
+              </div>
+              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-graphite-950/90 border border-amber-500/30">
+                <div>
+                  <span class="font-semibold text-white text-sm">3 батареї</span>
+                  <span class="text-xs text-slate-400 block sm:inline sm:ml-2">(90–135 хв польотного часу)</span>
+                </div>
+                <span class="font-mono font-extrabold text-lg text-amber-400">9 500 грн</span>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" onclick="selectPackageAndScroll('full', 1)" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-sm sm:text-base shadow-lg shadow-orange-600/25 transition flex items-center justify-center gap-2">
+            <span>Обрати Повний огляд + PDF</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       5. ІНТЕРАКТИВНИЙ КАЛЬКУЛЯТОР ВАРТОСТІ
+  ========================================================= -->
+  <section id="calculator" class="py-16 sm:py-24 bg-graphite-900/70 border-y border-slate-800/80">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <span class="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">Онлайн-розрахунок</span>
+        <h2 class="text-2xl sm:text-4xl font-extrabold text-white mt-2">Калькулятор вартості діагностики</h2>
+        <p class="text-slate-400 text-sm sm:text-base mt-3">
+          Оберіть бажаний формат та орієнтовний масштаб вашої сонячної електростанції.
+        </p>
+      </div>
+
+      <div class="rounded-3xl bg-graphite-950 border border-slate-800 p-6 sm:p-10 shadow-2xl thermal-border">
+        <div class="grid lg:grid-cols-12 gap-8 items-center">
+          
+          <!-- Controls -->
+          <div class="lg:col-span-7 space-y-6">
+            <!-- Step 1: Format -->
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-3">
+                1. Оберіть формат обстеження:
+              </label>
+              <div class="grid sm:grid-cols-2 gap-3">
+                <button type="button" id="calcFormatExpress" onclick="setCalcFormat('express')" class="p-4 rounded-2xl border text-left transition flex flex-col justify-between bg-graphite-900 border-slate-700 hover:border-sky-400">
+                  <div class="font-bold text-white text-sm sm:text-base">Експрес огляд на місці</div>
+                  <div class="text-xs text-slate-400 mt-1">Результат на екрані в реальному часі</div>
+                </button>
+                <button type="button" id="calcFormatFull" onclick="setCalcFormat('full')" class="p-4 rounded-2xl border text-left transition flex flex-col justify-between bg-amber-500/10 border-amber-500">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-white text-sm sm:text-base">Повний огляд + PDF</span>
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-500 text-slate-950">ТОП</span>
+                  </div>
+                  <div class="text-xs text-amber-200/80 mt-1">PDF-звіт, ортофотоплан та карта дефектів</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 2: Battery / Station Size -->
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-3">
+                2. Обсяг робіт / кількість батарей:
+              </label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button type="button" id="calcBat1" onclick="setCalcBatteries(1)" class="p-4 rounded-2xl border text-left transition bg-amber-500/10 border-amber-500">
+                  <div class="font-bold text-white text-base">1 батарея</div>
+                  <div class="text-xs text-slate-300 mt-1">20–45 хв польоту</div>
+                  <div class="text-[11px] text-slate-400 mt-1">Приватна СЕС (~10–35 кВт)</div>
+                </button>
+                <button type="button" id="calcBat2" onclick="setCalcBatteries(2)" class="p-4 rounded-2xl border text-left transition bg-graphite-900 border-slate-700 hover:border-slate-500">
+                  <div class="font-bold text-white text-base">2 батареї</div>
+                  <div class="text-xs text-slate-300 mt-1">45–90 хв польоту</div>
+                  <div class="text-[11px] text-slate-400 mt-1">Середня СЕС (~35–100 кВт)</div>
+                </button>
+                <button type="button" id="calcBat3" onclick="setCalcBatteries(3)" class="p-4 rounded-2xl border text-left transition bg-graphite-900 border-slate-700 hover:border-slate-500">
+                  <div class="font-bold text-white text-base">3 батареї</div>
+                  <div class="text-xs text-slate-300 mt-1">90–135 хв польоту</div>
+                  <div class="text-[11px] text-slate-400 mt-1">Велика СЕС (100+ кВт)</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Result Box -->
+          <div class="lg:col-span-5 rounded-2xl bg-graphite-900 border border-slate-800 p-6 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+              <span class="text-xs font-mono uppercase text-slate-400">Обраний пакет</span>
+              <span id="calcSummaryBadge" class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold">Повний огляд</span>
+            </div>
+
+            <div>
+              <div class="text-xs text-slate-400">Орієнтовна вартість:</div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span id="calcTotalPrice" class="text-4xl sm:text-5xl font-extrabold font-mono text-white">4 000</span>
+                <span class="text-lg font-bold text-amber-400">грн</span>
+              </div>
+              <div id="calcFlightTime" class="text-xs text-slate-400 mt-1.5">Польотний час: 20–45 хвилин (1 акумулятор)</div>
+            </div>
+
+            <div class="space-y-2 text-xs text-slate-300 bg-graphite-950/70 p-3.5 rounded-xl border border-slate-800/80" id="calcDeliverables">
+              <div class="font-semibold text-white mb-1">Що входить у вартість:</div>
+              <div>✓ Радіометрична аерозйомка з дрона</div>
+              <div>✓ Постобробка та детальний PDF-звіт</div>
+              <div>✓ Ортофотоплан та точна карта дефектів</div>
+            </div>
+
+            <button type="button" onclick="applyCalculatorToOrder()" class="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-sm shadow-lg shadow-orange-600/20 transition active:scale-[0.98]">
+              Зафіксувати ціну та замовити
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       6. ПРИКЛАДИ РЕАЛЬНОЇ ДІАГНОСТИКИ (ГАЛЕРЕЯ + ЗАВАНТАЖЕННЯ ФОТО)
+  ========================================================= -->
+  <section id="examples" class="py-16 sm:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div class="max-w-2xl space-y-3">
+          <span class="text-xs font-mono uppercase tracking-widest text-sky-400 font-bold">Практичні кейси</span>
+          <h2 class="text-2xl sm:text-4xl font-extrabold text-white">Приклади тепловізійної діагностики</h2>
+          <p class="text-slate-400 text-sm sm:text-base">
+            Реальні приклади виявлення гарячих точок (Hot Spots), радіометричних замірів та тепловізійних ортофотопланів.
+          </p>
+        </div>
+
+        <!-- Button for site owner to test/insert their local photos -->
+        <div class="flex flex-wrap items-center gap-3">
+          <label for="customPhotoUpload" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition">
+            <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Додати власні фото в галерею
+          </label>
+          <input id="customPhotoUpload" type="file" accept="image/*" multiple class="hidden" />
+        </div>
+      </div>
+
+      <!-- Gallery Grid -->
+      <div id="galleryGrid" class="grid md:grid-cols-3 gap-6">
+        
+        <!-- Case 1: Radiometric Hot Spots (SP1 85.3°C, SP2 87.7°C) -->
+        <article class="rounded-3xl bg-graphite-900 border border-slate-800 overflow-hidden flex flex-col">
+          <div class="relative aspect-[4/3] bg-slate-950 overflow-hidden">
+            <svg viewBox="0 0 600 450" class="w-full h-full object-cover">
+              <rect width="600" height="450" fill="#1e293b" />
+              <!-- Grayscale Iron/White-Hot DJI Radiometric look -->
+              <g transform="translate(50, 65)">
+                <rect x="0" y="0" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+                <rect x="100" y="0" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+                <rect x="200" y="0" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+                <rect x="300" y="0" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+                <rect x="400" y="0" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+
+                <rect x="0" y="155" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+                <rect x="100" y="155" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+                <rect x="200" y="155" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+                <rect x="300" y="155" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+                <rect x="400" y="155" width="95" height="145" fill="#94a3b8" stroke="#e2e8f0" stroke-width="2" />
+
+                <!-- Radiometric Target Crosshairs -->
+                <!-- SP2 87.7°C -->
+                <circle cx="215" cy="145" r="14" fill="#ef4444" fill-opacity="0.85" stroke="#ffffff" stroke-width="2" />
+                <line x1="195" y1="145" x2="235" y2="145" stroke="#ffffff" stroke-width="1.5" />
+                <line x1="215" y1="125" x2="215" y2="165" stroke="#ffffff" stroke-width="1.5" />
+                <rect x="148" y="102" width="132" height="24" rx="4" fill="#0f172a" fill-opacity="0.9" />
+                <text x="155" y="118" fill="#ffffff" font-family="JetBrains Mono, monospace" font-size="12" font-weight="bold">SP2 87.7°C</text>
+
+                <!-- SP1 85.3°C -->
+                <circle cx="365" cy="145" r="14" fill="#ef4444" fill-opacity="0.85" stroke="#ffffff" stroke-width="2" />
+                <line x1="345" y1="145" x2="385" y2="145" stroke="#ffffff" stroke-width="1.5" />
+                <line x1="365" y1="125" x2="365" y2="165" stroke="#ffffff" stroke-width="1.5" />
+                <rect x="302" y="102" width="132" height="24" rx="4" fill="#0f172a" fill-opacity="0.9" />
+                <text x="309" y="118" fill="#ffffff" font-family="JetBrains Mono, monospace" font-size="12" font-weight="bold">SP1 85.3°C</text>
+
+                <!-- Normal point SP15 57.7°C -->
+                <circle cx="320" cy="15" r="8" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5" />
+                <rect x="260" y="-32" width="125" height="22" rx="4" fill="#0f172a" fill-opacity="0.85" />
+                <text x="266" y="-17" fill="#bae6fd" font-family="JetBrains Mono, monospace" font-size="11">SP15 57.7°C</text>
+              </g>
+              <text x="16" y="28" fill="#94a3b8" font-family="JetBrains Mono, monospace" font-size="11">DJI_THERMAL_RADIOMETRIC_T.JPG</text>
+            </svg>
+            <span class="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-rose-600/90 text-white text-xs font-mono font-bold">
+              ΔT +29.5°C Аномалія
+            </span>
+          </div>
+          <div class="p-6 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <h3 class="font-bold text-lg text-white">Радіометричний аналіз точок перегріву</h3>
+              <p class="text-sm text-slate-400 mt-2 leading-relaxed">
+                При середній робочій температурі масиву 57.7°C виявлено критичні точки SP1 (85.3°C) та SP2 (87.7°C) на стиках комірок. Вчасна заміна запобігла виходу з ладу всього стрінга.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
+              <span>Дахова СЕС • 10 панелей</span>
+              <span class="text-amber-400">PDF + Заміри</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Case 2: Thermal Orthomosaic of Commercial Rooftop Array -->
+        <article class="rounded-3xl bg-graphite-900 border border-slate-800 overflow-hidden flex flex-col">
+          <div class="relative aspect-[4/3] bg-slate-950 overflow-hidden">
+            <svg viewBox="0 0 600 450" class="w-full h-full object-cover">
+              <rect width="600" height="450" fill="#1e1b4b" />
+              <!-- Rainbow/Arctic thermal orthomosaic style -->
+              <g transform="translate(45, 55)">
+                <!-- Top Array -->
+                <rect x="0" y="0" width="510" height="150" rx="4" fill="#0284c7" stroke="#f43f5e" stroke-width="2" />
+                <!-- Green/Yellow thermal gradient zone -->
+                <rect x="4" y="45" width="440" height="100" fill="#10b981" opacity="0.7" />
+                <!-- Grid of 30 panels -->
+                <g stroke="#1e3a8a" stroke-width="1.5">
+                  <line x1="51" y1="0" x2="51" y2="150" />
+                  <line x1="102" y1="0" x2="102" y2="150" />
+                  <line x1="153" y1="0" x2="153" y2="150" />
+                  <line x1="204" y1="0" x2="204" y2="150" />
+                  <line x1="255" y1="0" x2="255" y2="150" />
+                  <line x1="306" y1="0" x2="306" y2="150" />
+                  <line x1="357" y1="0" x2="357" y2="150" />
+                  <line x1="408" y1="0" x2="408" y2="150" />
+                  <line x1="459" y1="0" x2="459" y2="150" />
+                  <line x1="0" y1="50" x2="510" y2="50" />
+                  <line x1="0" y1="100" x2="510" y2="100" />
+                </g>
+                <!-- Bottom Array -->
+                <rect x="30" y="185" width="380" height="130" rx="4" fill="#0369a1" stroke="#facc15" stroke-width="2" />
+                <rect x="85" y="215" width="240" height="85" fill="#34d399" opacity="0.6" />
+                <!-- Highlighted faulty cell spots -->
+                <rect x="462" y="105" width="16" height="14" fill="#fef08a" stroke="#ef4444" stroke-width="1.5" />
+                <rect x="110" y="186" width="18" height="12" fill="#f97316" />
+                <rect x="265" y="186" width="18" height="12" fill="#f97316" />
+              </g>
+              <text x="16" y="28" fill="#38bdf8" font-family="JetBrains Mono, monospace" font-size="11">ORTHOMOSAIC_THERMAL_MAP.TIF</text>
+            </svg>
+            <span class="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-sky-600/90 text-white text-xs font-mono font-bold">
+              Ортофотоплан СЕС
+            </span>
+          </div>
+          <div class="p-6 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <h3 class="font-bold text-lg text-white">Тепловізійний ортофотоплан масиву</h3>
+              <p class="text-sm text-slate-400 mt-2 leading-relaxed">
+                Склейка десятків знімків у єдину карту високої роздільної здатності. Дозволяє оцінити тепловий баланс сотень модулів одночасно та локалізувати проблемні ряди.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
+              <span>Комерційна СЕС • 60+ панелей</span>
+              <span class="text-sky-400">2 батареї</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Case 3: Multi-cell Patchwork Defect (Bypass / Microcracks) -->
+        <article class="rounded-3xl bg-graphite-900 border border-slate-800 overflow-hidden flex flex-col">
+          <div class="relative aspect-[4/3] bg-slate-950 overflow-hidden">
+            <svg viewBox="0 0 600 450" class="w-full h-full object-cover">
+              <rect width="600" height="450" fill="#17082e" />
+              <g transform="translate(65, 75)">
+                <!-- Healthy left panels -->
+                <rect x="0" y="0" width="70" height="120" fill="#ea580c" stroke="#4c1d95" stroke-width="2" />
+                <rect x="75" y="0" width="70" height="120" fill="#ea580c" stroke="#4c1d95" stroke-width="2" />
+                <rect x="150" y="0" width="70" height="120" fill="#ea580c" stroke="#4c1d95" stroke-width="2" />
+                
+                <!-- Defective patchwork panels on right -->
+                <rect x="235" y="0" width="70" height="120" fill="#9333ea" stroke="#facc15" stroke-width="2" />
+                <rect x="242" y="12" width="18" height="22" fill="#fef08a" />
+                <rect x="275" y="48" width="18" height="22" fill="#fef08a" />
+                <rect x="245" y="84" width="18" height="22" fill="#f97316" />
+
+                <rect x="310" y="0" width="70" height="120" fill="#9333ea" stroke="#facc15" stroke-width="2" />
+                <rect x="320" y="20" width="18" height="22" fill="#fef08a" />
+                <rect x="350" y="65" width="18" height="22" fill="#fef08a" />
+
+                <rect x="385" y="0" width="70" height="120" fill="#9333ea" stroke="#facc15" stroke-width="2" />
+                <rect x="395" y="15" width="18" height="22" fill="#f97316" />
+                <rect x="425" y="55" width="18" height="22" fill="#fef08a" />
+                <rect x="395" y="90" width="18" height="22" fill="#fef08a" />
+
+                <!-- Bottom row -->
+                <rect x="0" y="135" width="70" height="120" fill="#ea580c" stroke="#4c1d95" stroke-width="2" />
+                <rect x="75" y="135" width="70" height="120" fill="#ea580c" stroke="#4c1d95" stroke-width="2" />
+                <rect x="150" y="135" width="70" height="120" fill="#ea580c" stroke="#4c1d95" stroke-width="2" />
+                <rect x="235" y="135" width="70" height="120" fill="#9333ea" stroke="#facc15" stroke-width="2" />
+                <rect x="245" y="155" width="18" height="22" fill="#fef08a" />
+                <rect x="275" y="205" width="18" height="22" fill="#fef08a" />
+                <rect x="310" y="135" width="70" height="120" fill="#9333ea" stroke="#facc15" stroke-width="2" />
+                <rect x="325" y="175" width="18" height="22" fill="#fef08a" />
+              </g>
+              <text x="16" y="28" fill="#fbbf24" font-family="JetBrains Mono, monospace" font-size="11">FLIR_CELL_DEGRADATION.JPG</text>
+            </svg>
+            <span class="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-amber-600/90 text-white text-xs font-mono font-bold">
+              Деградація комірок
+            </span>
+          </div>
+          <div class="p-6 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <h3 class="font-bold text-lg text-white">Виявлення деградації та збою діодів</h3>
+              <p class="text-sm text-slate-400 mt-2 leading-relaxed">
+                Характерний «шаховий» нагрів комірок у правій групі модулів свідчить про спрацювання або пробій байпас-діодів та мікротріщини. Візуально панелі виглядали новими.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
+              <span>Повна діагностика</span>
+              <span class="text-emerald-400">Збережено 22% генерації</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       7. ЧОМУ ВАЖЛИВА ДІАГНОСТИКА + FAQ
+  ========================================================= -->
+  <section id="faq" class="py-16 sm:py-24 bg-graphite-900/60 border-y border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+        
+        <!-- Left Info Block -->
+        <div class="lg:col-span-5 space-y-6">
+          <span class="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">Економіка та безпека</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+            Чому своєчасна діагностика окупається з першого дня?
+          </h2>
+          <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+            У сонячній електростанції панелі з'єднані послідовно у стрінги. Навіть один пошкоджений або перегрітий модуль обмежує струм усього ланцюга, знижуючи загальний виробіток електроенергії на <strong class="text-white">10–30%</strong>.
+          </p>
+
+          <div class="p-5 rounded-2xl bg-graphite-950 border border-amber-500/30 space-y-3">
+            <div class="flex items-center gap-2.5 text-amber-400 font-bold text-sm">
+              <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Ризик локального перегріву (Hot Spot)
+            </div>
+            <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              При нагріванні комірки вище +85°C відбувається руйнування захисної EVA-плівки та підкладки панелі, що створює загрозу короткого замикання або займання покрівлі.
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Accordion FAQ -->
+        <div class="lg:col-span-7 space-y-3">
+          <div class="text-xs font-mono uppercase tracking-wider text-slate-400 mb-2">Часті запитання (FAQ)</div>
+
+          <details class="group rounded-2xl bg-graphite-950 border border-slate-800 p-5 open:border-amber-500/40 transition" open>
+            <summary class="flex items-center justify-between cursor-pointer font-bold text-white text-sm sm:text-base list-none">
+              <span>Які погодні умови потрібні для точної тепловізійної зйомки?</span>
+              <span class="text-amber-400 group-open:rotate-180 transition-transform ml-3">▼</span>
+            </summary>
+            <p class="text-sm text-slate-400 mt-3 leading-relaxed">
+              Для коректного виявлення температурних аномалій необхідна ясна або малохмарна сонячна погода з рівнем інсоляції від 500–600 Вт/м² (коли станція працює під навантаженням) та помірний вітер до 5–7 м/с.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl bg-graphite-950 border border-slate-800 p-5 open:border-amber-500/40 transition">
+            <summary class="flex items-center justify-between cursor-pointer font-bold text-white text-sm sm:text-base list-none">
+              <span>Як розрахувати, скільки батарей потрібно для моєї станції?</span>
+              <span class="text-amber-400 group-open:rotate-180 transition-transform ml-3">▼</span>
+            </summary>
+            <p class="text-sm text-slate-400 mt-3 leading-relaxed">
+              1 акумулятор (20–45 хвилин польоту) зазвичай покриває приватну дахову або наземну СЕС потужністю до 30–35 кВт. Для комерційних або великих масивів від 40 до 100+ кВт потрібно 2–3 батареї для повного обльоту та побудови ортофотоплану.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl bg-graphite-950 border border-slate-800 p-5 open:border-amber-500/40 transition">
+            <summary class="flex items-center justify-between cursor-pointer font-bold text-white text-sm sm:text-base list-none">
+              <span>Чим «Експрес огляд» відрізняється від «Повного огляду з PDF»?</span>
+              <span class="text-amber-400 group-open:rotate-180 transition-transform ml-3">▼</span>
+            </summary>
+            <p class="text-sm text-slate-400 mt-3 leading-relaxed">
+              Під час Експрес огляду ви одразу на місці бачите картинку з тепловізора на екрані та отримуєте вказівки, які саме панелі мають перегрів. Повний огляд включає подальшу обробку радіометричних файлів на комп'ютері: створення ортофотоплану, точної карти дефектів з номерами панелей та офіційного PDF-звіту (зручно для рекламацій постачальнику або сервісній компанії).
+            </p>
+          </details>
+
+          <details class="group rounded-2xl bg-graphite-950 border border-slate-800 p-5 open:border-amber-500/40 transition">
+            <summary class="flex items-center justify-between cursor-pointer font-bold text-white text-sm sm:text-base list-none">
+              <span>Чи виїжджаєте ви по Одеській області?</span>
+              <span class="text-amber-400 group-open:rotate-180 transition-transform ml-3">▼</span>
+            </summary>
+            <p class="text-sm text-slate-400 mt-3 leading-relaxed">
+              Так, працюємо по всій Одесі та Одеській області. Вкажіть населений пункт у формі заявки, і ми узгодимо зручний день та час виїзду за прогнозом сонячної активності.
+            </p>
+          </details>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       8. ФОРМА ЗАМОВЛЕННЯ ТА КОНТАКТИ
+  ========================================================= -->
+  <section id="order" class="py-16 sm:py-24 relative">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-12 gap-10 items-start">
+        
+        <!-- Left Contacts & Quick Config -->
+        <div class="lg:col-span-5 space-y-6">
+          <div>
+            <span class="text-xs font-mono uppercase tracking-widest text-sky-400 font-bold">Зв'язок зі спеціалістом</span>
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-white mt-2">Замовити діагностику СЕС</h2>
+            <p class="text-sm text-slate-400 mt-3 leading-relaxed">
+              Заповніть коротку форму — сформується готовий розрахунок замовлення, який можна в один клік відправити в Telegram, Viber або зателефонувати напряму.
+            </p>
+          </div>
+
+          <!-- Contact Card -->
+          <div id="contacts-config" class="rounded-3xl bg-graphite-900 border border-slate-800 p-6 space-y-5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold">
+                  БПЛА
+                </div>
+                <div>
+                  <div class="font-bold text-white text-sm">Приватний спеціаліст з аудиту СЕС</div>
+                  <div class="text-xs text-slate-400">Одеса та Одеська область</div>
+                </div>
+              </div>
+              <button type="button" id="toggleEditContactsBtn" class="text-xs text-sky-400 hover:text-sky-300 underline font-medium">
+                Редагувати
+              </button>
+            </div>
+
+            <!-- Display Mode -->
+            <div id="contactsDisplayBlock" class="space-y-3 pt-2 border-t border-slate-800 text-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400">Телефон / Viber:</span>
+                <a id="contactPhoneLink" href="tel:+380000000000" class="font-mono font-bold text-white hover:text-amber-400 transition">+38 (0XX) XXX-XX-XX</a>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400">Telegram:</span>
+                <a id="contactTgLink" href="https://t.me/" target="_blank" rel="noopener noreferrer" class="font-mono font-semibold text-sky-400 hover:underline">@solar_audit_odessa</a>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400">Локація виїзду:</span>
+                <span class="text-slate-200 font-medium">м. Одеса та область</span>
+              </div>
+            </div>
+
+            <!-- Edit Mode (For Owner Customization) -->
+            <div id="contactsEditBlock" class="hidden space-y-3 pt-3 border-t border-slate-800">
+              <div class="text-xs text-amber-300">Вкажіть ваші контакти (збережуться у браузері):</div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Номер телефону:</label>
+                <input id="editPhoneInput" type="text" value="+38 (0XX) XXX-XX-XX" class="w-full px-3 py-2 rounded-xl bg-graphite-950 border border-slate-700 text-white text-xs font-mono" />
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Нік у Telegram (без або з @):</label>
+                <input id="editTgInput" type="text" value="@solar_audit_odessa" class="w-full px-3 py-2 rounded-xl bg-graphite-950 border border-slate-700 text-white text-xs font-mono" />
+              </div>
+              <button type="button" id="saveContactsBtn" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
+                Зберегти контакти
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Order Form -->
+        <div class="lg:col-span-7">
+          <form id="orderForm" class="rounded-3xl bg-graphite-900 border border-slate-800 p-6 sm:p-8 shadow-2xl space-y-5">
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label for="clientName" class="block text-xs font-semibold text-slate-300 mb-1.5">Ваше ім'я *</label>
+                <input id="clientName" type="text" required placeholder="Олександр" class="w-full px-4 py-3 rounded-xl bg-graphite-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-white text-sm" />
+              </div>
+              <div>
+                <label for="clientPhone" class="block text-xs font-semibold text-slate-300 mb-1.5">Телефон або Telegram *</label>
+                <input id="clientPhone" type="text" required placeholder="+380 (__) ___-__-__" class="w-full px-4 py-3 rounded-xl bg-graphite-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-white text-sm" />
+              </div>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label for="orderFormatSelect" class="block text-xs font-semibold text-slate-300 mb-1.5">Формат діагностики</label>
+                <select id="orderFormatSelect" class="w-full px-4 py-3 rounded-xl bg-graphite-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-white text-sm">
+                  <option value="express">Експрес огляд на місці</option>
+                  <option value="full" selected>Повний огляд (PDF + ортофотоплан)</option>
+                </select>
+              </div>
+              <div>
+                <label for="orderBatteriesSelect" class="block text-xs font-semibold text-slate-300 mb-1.5">Кількість батарей / обсяг</label>
+                <select id="orderBatteriesSelect" class="w-full px-4 py-3 rounded-xl bg-graphite-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-white text-sm">
+                  <option value="1">1 батарея (20–45 хв)</option>
+                  <option value="2">2 батареї (45–90 хв)</option>
+                  <option value="3">3 батареї (90–135 хв)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="clientLocation" class="block text-xs font-semibold text-slate-300 mb-1.5">Локація станції (місто / село в Одеській області)</label>
+              <input id="clientLocation" type="text" placeholder="Наприклад: м. Одеса, Совіньйон або Біляївський р-н" class="w-full px-4 py-3 rounded-xl bg-graphite-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-white text-sm" />
+            </div>
+
+            <div>
+              <label for="clientComment" class="block text-xs font-semibold text-slate-300 mb-1.5">Коментар (потужність СЕС, дахова чи наземна)</label>
+              <textarea id="clientComment" rows="3" placeholder="Наприклад: Дахова СЕС 30 кВт, впала генерація по одному стрінгу..." class="w-full px-4 py-3 rounded-xl bg-graphite-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-white text-sm"></textarea>
+            </div>
+
+            <!-- Live Price Banner inside Form -->
+            <div class="p-4 rounded-2xl bg-graphite-950 border border-slate-800 flex items-center justify-between">
+              <span class="text-xs sm:text-sm text-slate-300">Попередня вартість замовлення:</span>
+              <span id="formLivePrice" class="font-mono font-extrabold text-xl text-amber-400">4 000 грн</span>
+            </div>
+
+            <button type="submit" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-base shadow-xl shadow-orange-600/25 transition active:scale-[0.98]">
+              Сформувати заявку на огляд
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       FOOTER
+  ========================================================= -->
+  <footer class="bg-graphite-950 border-t border-slate-800/80 py-10 text-center sm:text-left">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <div class="font-extrabold text-white text-sm">SOLAR <span class="text-amber-400">THERMAL</span> AUDIT</div>
+        <p class="text-xs text-slate-500 mt-1">Тепловізійна діагностика та аеромоніторинг сонячних електростанцій • Одеса та область</p>
+      </div>
+      <div class="text-xs text-slate-500">
+        Своєчасна діагностика зберігає генерацію та безпеку вашої СЕС.
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================
+       MODAL: ORDER CONFIRMATION & COPY TO CLIPBOARD
+  ========================================================= -->
+  <div id="orderModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-graphite-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 class="font-extrabold text-lg text-white">Заявку сформовано!</h3>
+        </div>
+        <button type="button" id="closeModalBtn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          ✕
+        </button>
+      </div>
+
+      <p class="text-xs sm:text-sm text-slate-300">
+        Скопіюйте текст заявки нижче та надішліть його у Telegram, Viber або на OLX для швидкого узгодження часу вильоту:
+      </p>
+
+      <pre id="orderSummaryText" class="p-4 rounded-2xl bg-graphite-950 border border-slate-800 text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed"></pre>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button type="button" id="copyOrderBtn" class="flex-1 py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2">
+          <span>Скопіювати заявку</span>
+        </button>
+        <a id="modalTgDirectBtn" href="https://t.me/" target="_blank" rel="noopener noreferrer" class="flex-1 py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm text-center transition">
+          Відкрити Telegram
+        </a>
+      </div>
+      <div id="copyFeedback" class="hidden text-center text-xs text-emerald-400 font-semibold">
+        ✓ Текст заявки скопійовано в буфер обміну!
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       JAVASCRIPT LOGIC
+  ========================================================= -->
+  <script>
+    // Pricing Matrix (UAH)
+    const PRICES = {
+      express: { 1: 2500, 2: 4500, 3: 6000 },
+      full: { 1: 4000, 2: 7000, 3: 9500 }
+    };
+
+    const FLIGHT_TIMES = {
+      1: '20–45 хвилин (1 акумулятор)',
+      2: '45–90 хвилин (2 акумулятори)',
+      3: '90–135 хвилин (3 акумулятори)'
+    };
+
+    let calcState = {
+      format: 'full',
+      batteries: 1
+    };
+
+    // Format currency helper
+    function formatPrice(num) {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    }
+
+    // 1. Mobile Navigation Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+    });
+
+    // 2. Hero Interactive RGB vs Thermal Slider
+    const heroCompareRange = document.getElementById('heroCompareRange');
+    const rgbOverlayLayer = document.getElementById('rgbOverlayLayer');
+    const compareDividerLine = document.getElementById('compareDividerLine');
+
+    function updateHeroComparison(val) {
+      const rightInset = 100 - val;
+      rgbOverlayLayer.style.clipPath = `inset(0 ${rightInset}% 0 0)`;
+      compareDividerLine.style.left = `${val}%`;
+    }
+    heroCompareRange.addEventListener('input', (e) => {
+      updateHeroComparison(e.target.value);
+    });
+
+    // 3. Calculator State & UI Update
+    function renderCalculator() {
+      const btnExpress = document.getElementById('calcFormatExpress');
+      const btnFull = document.getElementById('calcFormatFull');
+
+      if (calcState.format === 'express') {
+        btnExpress.className = 'p-4 rounded-2xl border text-left transition flex flex-col justify-between bg-sky-500/15 border-sky-400';
+        btnFull.className = 'p-4 rounded-2xl border text-left transition flex flex-col justify-between bg-graphite-900 border-slate-700 hover:border-slate-500';
+      } else {
+        btnFull.className = 'p-4 rounded-2xl border text-left transition flex flex-col justify-between bg-amber-500/15 border-amber-500';
+        btnExpress.className = 'p-4 rounded-2xl border text-left transition flex flex-col justify-between bg-graphite-900 border-slate-700 hover:border-slate-500';
+      }
+
+      [1, 2, 3].forEach(num => {
+        const btn = document.getElementById(`calcBat${num}`);
+        if (calcState.batteries === num) {
+          btn.className = 'p-4 rounded-2xl border text-left transition bg-amber-500/15 border-amber-500';
+        } else {
+          btn.className = 'p-4 rounded-2xl border text-left transition bg-graphite-900 border-slate-700 hover:border-slate-500';
+        }
+      });
+
+      const price = PRICES[calcState.format][calcState.batteries];
+      document.getElementById('calcTotalPrice').textContent = formatPrice(price);
+      document.getElementById('calcFlightTime').textContent = `Польотний час: ${FLIGHT_TIMES[calcState.batteries]}`;
+
+      const badge = document.getElementById('calcSummaryBadge');
+      const deliverables = document.getElementById('calcDeliverables');
+
+      if (calcState.format === 'express') {
+        badge.textContent = 'Експрес огляд';
+        badge.className = 'px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 text-xs font-bold';
+        deliverables.innerHTML = `
+          <div class="font-semibold text-white mb-1">Що входить у вартість:</div>
+          <div>✓ Діагностика в режимі реального часу</div>
+          <div>✓ Демонстрація проблемних зон на екрані</div>
+          <div>✓ Озвучення рекомендацій одразу на об'єкті</div>
+        `;
+      } else {
+        badge.textContent = 'Повний огляд + PDF';
+        badge.className = 'px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold';
+        deliverables.innerHTML = `
+          <div class="font-semibold text-white mb-1">Що входить у вартість:</div>
+          <div>✓ Радіометрична аерозйомка з дрона</div>
+          <div>✓ Постобробка та детальний PDF-звіт</div>
+          <div>✓ Ортофотоплан та точна карта дефектів</div>
+        `;
+      }
+    }
+
+    function setCalcFormat(fmt) {
+      calcState.format = fmt;
+      renderCalculator();
+    }
+
+    function setCalcBatteries(bat) {
+      calcState.batteries = bat;
+      renderCalculator();
+    }
+
+    // 4. Sync Pricing Cards & Calculator to Order Form
+    const orderFormatSelect = document.getElementById('orderFormatSelect');
+    const orderBatteriesSelect = document.getElementById('orderBatteriesSelect');
+    const formLivePrice = document.getElementById('formLivePrice');
+
+    function updateFormLivePrice() {
+      const fmt = orderFormatSelect.value;
+      const bat = parseInt(orderBatteriesSelect.value, 10);
+      const price = PRICES[fmt][bat];
+      formLivePrice.textContent = `${formatPrice(price)} грн`;
+    }
+
+    orderFormatSelect.addEventListener('change', updateFormLivePrice);
+    orderBatteriesSelect.addEventListener('change', updateFormLivePrice);
+
+    function selectPackageAndScroll(fmt, bat) {
+      orderFormatSelect.value = fmt;
+      orderBatteriesSelect.value = String(bat);
+      updateFormLivePrice();
+      document.getElementById('order').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function applyCalculatorToOrder() {
+      selectPackageAndScroll(calcState.format, calcState.batteries);
+    }
+
+    // 5. Custom Photo Upload for Gallery (Allows site owner to preview their own photos)
+    const customPhotoUpload = document.getElementById('customPhotoUpload');
+    const galleryGrid = document.getElementById('galleryGrid');
+
+    customPhotoUpload.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const card = document.createElement('article');
+          card.className = 'rounded-3xl bg-graphite-900 border border-amber-500/50 overflow-hidden flex flex-col';
+          card.innerHTML = `
+            <div class="relative aspect-[4/3] bg-slate-950 overflow-hidden">
+              <img src="${ev.target.result}" alt="${file.name}" class="w-full h-full object-cover" />
+              <span class="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-amber-600/90 text-white text-xs font-mono font-bold">
+                Знімок з аудиту
+              </span>
+            </div>
+            <div class="p-6 flex-1 flex flex-col justify-between space-y-3">
+              <div>
+                <h3 class="font-bold text-lg text-white">Результати тепловізійної зйомки</h3>
+                <p class="text-sm text-slate-400 mt-2 leading-relaxed">
+                  Файл: <span class="font-mono text-slate-300">${file.name}</span>. Перевірка температурного балансу модулів та локалізація дефектів.
+                </p>
+              </div>
+              <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
+                <span>Одеса та область</span>
+                <span class="text-emerald-400">DJI / FLIR</span>
+              </div>
+            </div>
+          `;
+          galleryGrid.prepend(card);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    // 6. Editable Contacts (Persisted in localStorage)
+    const toggleEditContactsBtn = document.getElementById('toggleEditContactsBtn');
+    const contactsDisplayBlock = document.getElementById('contactsDisplayBlock');
+    const contactsEditBlock = document.getElementById('contactsEditBlock');
+    const saveContactsBtn = document.getElementById('saveContactsBtn');
+    const editPhoneInput = document.getElementById('editPhoneInput');
+    const editTgInput = document.getElementById('editTgInput');
+
+    function applyContacts(phone, tg) {
+      const cleanTg = tg.startsWith('@') ? tg : `@${tg}`;
+      const tgUsername = cleanTg.replace('@', '');
+      const cleanTel = phone.replace(/[^\d+]/g, '');
+
+      document.getElementById('headerPhoneDisplay').textContent = phone;
+      const phoneLink = document.getElementById('contactPhoneLink');
+      phoneLink.textContent = phone;
+      phoneLink.href = cleanTel ? `tel:${cleanTel}` : '#order';
+
+      const tgLink = document.getElementById('contactTgLink');
+      tgLink.textContent = cleanTg;
+      tgLink.href = `https://t.me/${tgUsername}`;
+      document.getElementById('modalTgDirectBtn').href = `https://t.me/${tgUsername}`;
+    }
+
+    try {
+      const savedPhone = localStorage.getItem('solar_audit_phone');
+      const savedTg = localStorage.getItem('solar_audit_tg');
+      if (savedPhone && savedTg) {
+        editPhoneInput.value = savedPhone;
+        editTgInput.value = savedTg;
+        applyContacts(savedPhone, savedTg);
+      }
+    } catch (err) {
+      // Ignore storage errors in restricted environments
+    }
+
+    toggleEditContactsBtn.addEventListener('click', () => {
+      contactsEditBlock.classList.toggle('hidden');
+    });
+
+    saveContactsBtn.addEventListener('click', () => {
+      const phone = editPhoneInput.value.trim() || '+38 (0XX) XXX-XX-XX';
+      const tg = editTgInput.value.trim() || '@solar_audit_odessa';
+      applyContacts(phone, tg);
+      try {
+        localStorage.setItem('solar_audit_phone', phone);
+        localStorage.setItem('solar_audit_tg', tg);
+      } catch (err) {}
+      contactsEditBlock.classList.add('hidden');
+    });
+
+    // 7. Order Form Submission & Modal Copy
+    const orderForm = document.getElementById('orderForm');
+    const orderModal = document.getElementById('orderModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const orderSummaryText = document.getElementById('orderSummaryText');
+    const copyOrderBtn = document.getElementById('copyOrderBtn');
+    const copyFeedback = document.getElementById('copyFeedback');
+
+    orderForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('clientName').value.trim();
+      const phone = document.getElementById('clientPhone').value.trim();
+      const fmt = orderFormatSelect.value;
+      const bat = parseInt(orderBatteriesSelect.value, 10);
+      const location = document.getElementById('clientLocation').value.trim() || 'Не вказано';
+      const comment = document.getElementById('clientComment').value.trim() || 'Без додаткового коментаря';
+
+      const formatLabel = fmt === 'express'
+        ? 'Експрес огляд на місці'
+        : 'Повний огляд з постобробкою (PDF + ортофотоплан)';
+      const price = formatPrice(PRICES[fmt][bat]);
+
+      const message = [
+        '☀️ ЗАЯВКА НА ТЕПЛОВІЗІЙНУ ДІАГНОСТИКУ СЕС',
+        `• Ім'я: ${name}`,
+        `• Контакт: ${phone}`,
+        `• Формат: ${formatLabel}`,
+        `• Обсяг: ${bat} бат. (${FLIGHT_TIMES[bat]})`,
+        `• Вартість: ${price} грн`,
+        `• Локація: ${location}`,
+        `• Деталі: ${comment}`
+      ].join('\n');
+
+      orderSummaryText.textContent = message;
+      copyFeedback.classList.add('hidden');
+      orderModal.classList.remove('hidden');
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      orderModal.classList.add('hidden');
+    });
+
+    orderModal.addEventListener('click', (e) => {
+      if (e.target === orderModal) {
+        orderModal.classList.add('hidden');
+      }
+    });
+
+    copyOrderBtn.addEventListener('click', () => {
+      const text = orderSummaryText.textContent;
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        copyFeedback.classList.remove('hidden');
+      } catch (err) {
+        copyFeedback.textContent = 'Виділіть текст вище та скопіюйте вручну.';
+        copyFeedback.classList.remove('hidden');
+      }
+      document.body.removeChild(textarea);
+    });
+
+    // Initialize default calculator state
+    renderCalculator();
+  </script>
+</body>
+</html>
